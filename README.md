@@ -26,6 +26,20 @@ Fase 0 — Entorno y fundamentos. Ver el roadmap completo en el vault de Obsidia
 
 4. Verificar: `GET http://localhost:3000/health` debería responder `{ "status": "ok" }`.
 
+> Nota: si en tu máquina ya tenés Postgres en `5432` o Redis en `6379` corriendo para otro
+> proyecto, este `docker-compose.yml` usa `5433` y `6380` como puertos de host para evitar el
+> choque (el puerto interno del contenedor no cambia).
+
+## Flujo de ramas
+
+- **`main`** — rama de trabajo principal. Se pushea directo (proyecto individual).
+- **`dev`** — solo para experimentos grandes o riesgosos que no querés en `main` todavía.
+- **`produccion`** — espejo de `main`. Se actualiza a mano cuando algo ya está probado:
+
+  ```bash
+  git push origin main:produccion
+  ```
+
 ## Stack
 
 - TypeScript + Node + Express
