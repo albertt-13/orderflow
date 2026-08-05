@@ -19,9 +19,62 @@ model User {
   role           Role     @default(CLIENTE)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  orders Order[]
 }
 
 enum Role {
   CLIENTE
   ADMIN
+}
+
+model Product {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([name])
+}
+
+model Order {
+  id        String      @id @default(uuid()) @db.Uuid
+  status    OrderStatus @default(PENDING)
+  total     Decimal     @db.Decimal(10, 2)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+
+  @@index([userId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  orderId String @db.Uuid
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
