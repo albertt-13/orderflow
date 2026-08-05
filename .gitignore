@@ -3,3 +3,11 @@ dist/
 .env
 *.log
 .DS_Store
+
+/src/generated/prisma
+
+# skills de referencia de Prisma para agentes IA (regenerables, no aportan al repo)
+.agents/
+.claude/skills/
+.windsurf/
+skills-lock.json
