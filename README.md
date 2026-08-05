@@ -6,7 +6,15 @@ a eventos (Node, TypeScript, Express, PostgreSQL, Redis, RabbitMQ, Docker).
 
 ## Estado actual
 
-Fase 0 — Entorno y fundamentos. Ver el roadmap completo en el vault de Obsidian del proyecto.
+Fase 1 — Monolito sólido (en progreso). Ver el roadmap completo en el vault de Obsidian del proyecto.
+
+## Endpoints
+
+| Método | Ruta            | Auth | Descripción                                   |
+|--------|-----------------|------|------------------------------------------------|
+| POST   | `/auth/register`| —    | Crea un usuario (rol `CLIENTE` por defecto)    |
+| POST   | `/auth/login`   | —    | Devuelve `accessToken` (15m) y `refreshToken` (7d) |
+| GET    | `/health`       | —    | Health check                                   |
 
 ## Cómo levantarlo
 
