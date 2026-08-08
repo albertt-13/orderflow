@@ -2,14 +2,24 @@ import type { NextFunction, Request, Response } from "express";
 import type { ZodType } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 
-export function validateBody<T>(schema: ZodType<T>) {
+function validate<T>(schema: ZodType<T>, source: "body" | "query" | "params") {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    const result = schema.safeParse(req.body);
+    const result = schema.safeParse(req[source]);
     if (!result.success) {
       next(new BadRequestError(result.error.issues.map((issue) => issue.message).join(", ")));
       return;
     }
-    req.body = result.data;
+    if (source === "query") {
+      // req.query es un getter en Express 5 que reparsea el string original en cada
+      // acceso (no cachea) — mutarlo o reasignarlo no persiste. Se guarda aparte.
+      req.validatedQuery = result.data;
+    } else {
+      req[source] = result.data as never;
+    }
     next();
   };
 }
+
+export const validateBody = <T>(schema: ZodType<T>) => validate(schema, "body");
+export const validateQuery = <T>(schema: ZodType<T>) => validate(schema, "query");
+export const validateParams = <T>(schema: ZodType<T>) => validate(schema, "params");

@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx prisma/seed.ts"
   },
   "license": "ISC",
   "dependencies": {
