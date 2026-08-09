@@ -8,6 +8,7 @@ import { createProductSchema, listProductsQuerySchema, updateProductSchema } fro
 export const productsRouter = Router();
 
 productsRouter.get("/", validateQuery(listProductsQuerySchema), productsController.list);
+productsRouter.get("/bestsellers", productsController.bestsellers);
 
 productsRouter.post(
   "/",

@@ -6,6 +6,7 @@ import type { CreateProductInput, ListProductsQuery, UpdateProductInput } from "
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_KEY_PREFIX = "products:list:";
+const BESTSELLERS_KEY = "products:bestsellers";
 
 function cacheKey(query: ListProductsQuery) {
   return `${CACHE_KEY_PREFIX}page=${query.page}:limit=${query.limit}:name=${query.name ?? ""}`;
@@ -78,5 +79,38 @@ export const productsService = {
     }
 
     return { data, cacheHit: false as const };
+  },
+
+  /** Analítica best-effort: si Redis no responde, no debe romper la orden que la dispara. */
+  async recordSale(productId: string, quantity: number) {
+    try {
+      await redis.zincrby(BESTSELLERS_KEY, quantity, productId);
+    } catch (err) {
+      logger.warn({ err }, "no se pudo actualizar el ranking de más vendidos");
+    }
+  },
+
+  async bestsellers(limit: number) {
+    let raw: string[];
+    try {
+      raw = await redis.zrevrange(BESTSELLERS_KEY, 0, limit - 1, "WITHSCORES");
+    } catch (err) {
+      logger.warn({ err }, "ranking de más vendidos no disponible (Redis caído)");
+      return [];
+    }
+
+    const entries: { productId: string; sold: number }[] = [];
+    for (let i = 0; i < raw.length; i += 2) {
+      entries.push({ productId: raw[i] as string, sold: Number(raw[i + 1]) });
+    }
+    if (entries.length === 0) return [];
+
+    const products = await productsRepository.findByIds(entries.map((e) => e.productId));
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    return entries.flatMap((e) => {
+      const product = productMap.get(e.productId);
+      return product ? [{ ...product, sold: e.sold }] : [];
+    });
   },
 };

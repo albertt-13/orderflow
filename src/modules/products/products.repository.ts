@@ -18,6 +18,10 @@ export const productsRepository = {
     return prisma.product.findUnique({ where: { id } });
   },
 
+  findByIds(ids: string[]) {
+    return prisma.product.findMany({ where: { id: { in: ids } } });
+  },
+
   async findMany({ page, limit, name }: { page: number; limit: number; name?: string }) {
     const where = name ? { name: { contains: name, mode: "insensitive" as const } } : {};
 

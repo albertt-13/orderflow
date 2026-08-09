@@ -23,4 +23,10 @@ export const productsController = {
     res.setHeader("X-Cache", cacheHit ? "HIT" : "MISS");
     res.status(200).json(data);
   },
+
+  async bestsellers(req: Request, res: Response) {
+    const limit = Number(req.query.limit) || 5;
+    const result = await productsService.bestsellers(limit);
+    res.status(200).json(result);
+  },
 };

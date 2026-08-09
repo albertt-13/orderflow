@@ -1,5 +1,6 @@
 import { Prisma } from "../../generated/prisma/client.js";
 import { ConflictError, NotFoundError } from "../../shared/errors/AppError.js";
+import { productsService } from "../products/products.service.js";
 import { ordersRepository } from "./orders.repository.js";
 import type { CreateOrderInput, UpdateOrderStatusInput } from "./orders.schemas.js";
 
@@ -14,7 +15,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 export const ordersService = {
   async create(userId: string, input: CreateOrderInput) {
-    return ordersRepository.runInTransaction(async (tx) => {
+    const order = await ordersRepository.runInTransaction(async (tx) => {
       let total = new Prisma.Decimal(0);
       const itemsToCreate = [];
 
@@ -44,6 +45,15 @@ export const ordersService = {
 
       return ordersRepository.createOrder(tx, { userId, total, items: itemsToCreate });
     });
+
+    // Fuera de la transaccion (recien despues del commit): es analitica en
+    // Redis para el ranking de mas vendidos, no algo que deba poder hacer
+    // rollback de la orden si falla.
+    for (const item of input.items) {
+      void productsService.recordSale(item.productId, item.quantity);
+    }
+
+    return order;
   },
 
   listForUser(userId: string) {
