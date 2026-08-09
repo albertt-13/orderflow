@@ -4,6 +4,7 @@ import { logger } from "./shared/logger/index.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { productsRouter } from "./modules/products/products.routes.js";
+import { ordersRouter } from "./modules/orders/orders.routes.js";
 
 export const app = express();
 
@@ -16,5 +17,6 @@ app.get("/health", (_req, res) => {
 
 app.use("/auth", authRouter);
 app.use("/products", productsRouter);
+app.use("/orders", ordersRouter);
 
 app.use(errorHandler);
