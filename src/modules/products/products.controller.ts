@@ -19,7 +19,8 @@ export const productsController = {
   },
 
   async list(req: Request, res: Response) {
-    const result = await productsService.list(req.validatedQuery as ListProductsQuery);
-    res.status(200).json(result);
+    const { data, cacheHit } = await productsService.list(req.validatedQuery as ListProductsQuery);
+    res.setHeader("X-Cache", cacheHit ? "HIT" : "MISS");
+    res.status(200).json(data);
   },
 };
