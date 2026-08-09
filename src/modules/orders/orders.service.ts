@@ -1,5 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { Prisma } from "../../generated/prisma/client.js";
+import { publishEvent } from "../../infra/rabbitmq.js";
 import { ConflictError, NotFoundError } from "../../shared/errors/AppError.js";
+import { ROUTING_KEYS } from "../../shared/events/contracts.js";
+import type { OrderCancelledEvent, OrderCreatedEvent } from "../../shared/events/contracts.js";
 import { productsService } from "../products/products.service.js";
 import { ordersRepository } from "./orders.repository.js";
 import type { CreateOrderInput, UpdateOrderStatusInput } from "./orders.schemas.js";
@@ -46,12 +50,22 @@ export const ordersService = {
       return ordersRepository.createOrder(tx, { userId, total, items: itemsToCreate });
     });
 
-    // Fuera de la transaccion (recien despues del commit): es analitica en
-    // Redis para el ranking de mas vendidos, no algo que deba poder hacer
-    // rollback de la orden si falla.
+    // Fuera de la transaccion (recien despues del commit): son efectos
+    // secundarios (analitica, notificaciones), no algo que deba poder hacer
+    // rollback de la orden si fallan.
     for (const item of input.items) {
       void productsService.recordSale(item.productId, item.quantity);
     }
+
+    const event: OrderCreatedEvent = {
+      eventId: randomUUID(),
+      orderId: order.id,
+      userId,
+      items: input.items,
+      total: order.total.toString(),
+      occurredAt: new Date().toISOString(),
+    };
+    void publishEvent(ROUTING_KEYS.ORDER_CREATED, event);
 
     return order;
   },
@@ -71,6 +85,18 @@ export const ordersService = {
       throw new ConflictError(`No se puede pasar de ${order.status} a ${nextStatus}`);
     }
 
-    return ordersRepository.updateStatus(orderId, nextStatus);
+    const updated = await ordersRepository.updateStatus(orderId, nextStatus);
+
+    if (nextStatus === "CANCELLED") {
+      const event: OrderCancelledEvent = {
+        eventId: randomUUID(),
+        orderId: updated.id,
+        userId: updated.userId,
+        occurredAt: new Date().toISOString(),
+      };
+      void publishEvent(ROUTING_KEYS.ORDER_CANCELLED, event);
+    }
+
+    return updated;
   },
 };
