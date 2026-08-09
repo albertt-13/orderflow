@@ -6,8 +6,24 @@ a eventos (Node, TypeScript, Express, PostgreSQL, Redis, RabbitMQ, Docker).
 
 ## Estado actual
 
-Fase 2 — Redis completa (cache-aside, rate limiting, refresh tokens, ranking de más vendidos).
-Ver el roadmap completo en el vault de Obsidian del proyecto.
+Fase 3 — RabbitMQ completa (eventos de dominio, worker con acks manuales, reintentos, dead
+letter queue e idempotencia). Ver el roadmap completo en el vault de Obsidian del proyecto.
+
+## Eventos (RabbitMQ)
+
+Exchange topic `orderflow.events`. Al crear una orden se publica `order.created`; al cancelarla,
+`order.cancelled`. Un worker separado los consume:
+
+```bash
+npm run worker
+```
+
+- Cola `orderflow.notifications`, bindeada con el patrón `order.*`.
+- `channel.prefetch(1)` — un mensaje a la vez.
+- Reintentos: hasta 3, con delay creciente (header `x-retry-count`); agotados los reintentos, el
+  mensaje va a `orderflow.notifications.dlq`.
+- Idempotencia vía Redis (`processed-events:{eventId}`) — un evento duplicado no se reprocesa.
+- Panel de administración: http://localhost:15672 (guest/guest).
 
 ## Endpoints
 
@@ -80,6 +96,7 @@ carpeta como colección, elegí el environment `Local`, y corré `Login`/`Login 
 ## Scripts
 
 - `npm run dev` — servidor en modo desarrollo con recarga automática
+- `npm run worker` — worker de eventos (RabbitMQ) en modo desarrollo
 - `npm run build` — compila TypeScript a `dist/`
 - `npm run lint` — ESLint
 - `npm run typecheck` — chequeo de tipos sin emitir
