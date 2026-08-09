@@ -1,0 +1,15 @@
+meta {
+  name: Bestsellers
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/products/bestsellers?limit=5
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 5
+}

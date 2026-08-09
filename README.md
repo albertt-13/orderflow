@@ -6,7 +6,8 @@ a eventos (Node, TypeScript, Express, PostgreSQL, Redis, RabbitMQ, Docker).
 
 ## Estado actual
 
-Fase 1 — Monolito sólido (en progreso). Ver el roadmap completo en el vault de Obsidian del proyecto.
+Fase 2 — Redis completa (cache-aside, rate limiting, refresh tokens, ranking de más vendidos).
+Ver el roadmap completo en el vault de Obsidian del proyecto.
 
 ## Endpoints
 
@@ -14,15 +15,20 @@ Fase 1 — Monolito sólido (en progreso). Ver el roadmap completo en el vault d
 |--------|--------------------------|-------------|-----------------------------------------------------------------|
 | GET    | `/health`                | —           | Health check                                                    |
 | POST   | `/auth/register`         | —           | Crea un usuario (rol `CLIENTE` por defecto)                     |
-| POST   | `/auth/login`            | —           | Devuelve `accessToken` (15m) y `refreshToken` (7d)               |
+| POST   | `/auth/login`            | —           | Devuelve `accessToken` (15m) y `refreshToken` (7d). Rate limit: 5/15min por IP |
 | POST   | `/auth/refresh`          | —           | Rota el refresh token; el usado queda inválido                  |
-| GET    | `/products`              | —           | Lista pública, paginada (`?page=&limit=`), filtro por `name`    |
+| POST   | `/auth/logout`           | —           | Invalida un refresh token puntual                               |
+| POST   | `/auth/logout-all`       | autenticado | Invalida todos los refresh tokens del usuario                   |
+| GET    | `/products`              | —           | Lista pública, paginada (`?page=&limit=`), filtro por `name`. Cacheada 60s (`X-Cache: HIT\|MISS`) |
+| GET    | `/products/bestsellers`  | —           | Ranking de productos más vendidos (Redis sorted set)             |
 | POST   | `/products`              | ADMIN       | Crea un producto                                                 |
 | PATCH  | `/products/:id`          | ADMIN       | Actualiza campos parciales de un producto                       |
 | DELETE | `/products/:id`          | ADMIN       | Borra un producto                                                |
 | POST   | `/orders`                | autenticado | Crea una orden y descuenta stock en una transacción             |
 | GET    | `/orders/me`             | autenticado | Órdenes del usuario autenticado, con sus items                  |
 | PATCH  | `/orders/:id/status`     | ADMIN       | Avanza el estado de una orden (`PENDING→PAID→SHIPPED`/`CANCELLED`) |
+
+**Cache de productos:** ~20ms sin cache (MISS) vs ~3ms con cache (HIT), medido local.
 
 Colección de [Bruno](https://www.usebruno.com/) con todos los endpoints en `bruno/` — abrí esa
 carpeta como colección, elegí el environment `Local`, y corré `Login`/`Login (Admin)` primero
