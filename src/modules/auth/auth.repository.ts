@@ -8,4 +8,8 @@ export const authRepository = {
   create(email: string, hashedPassword: string) {
     return prisma.user.create({ data: { email, hashedPassword } });
   },
+
+  findById(id: string) {
+    return prisma.user.findUnique({ where: { id } });
+  },
 };
