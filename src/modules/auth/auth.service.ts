@@ -8,10 +8,10 @@ import type { LoginInput, RegisterInput } from "./auth.schemas.js";
 const BCRYPT_COST_FACTOR = 12;
 
 async function issueTokenPair(userId: string, role: string) {
-  const refreshTokenRow = await refreshTokenRepository.create(userId);
+  const tokenId = await refreshTokenRepository.create(userId);
   return {
     accessToken: signAccessToken({ userId, role }),
-    refreshToken: signRefreshToken({ userId, tokenId: refreshTokenRow.id }),
+    refreshToken: signRefreshToken({ userId, tokenId }),
   };
 }
 
@@ -50,31 +50,43 @@ export const authService = {
       throw new UnauthorizedError("Refresh token inválido o expirado");
     }
 
-    const stored = await refreshTokenRepository.findById(payload.tokenId);
-    if (!stored || stored.userId !== payload.userId) {
+    const status = await refreshTokenRepository.getStatus(payload.userId, payload.tokenId);
+
+    if (status === "missing") {
       throw new UnauthorizedError("Refresh token inválido");
     }
 
-    if (stored.revokedAt) {
+    if (status === "revoked") {
       // Alguien está reusando un refresh token que ya fue rotado: indicio de
-      // robo de token. Por seguridad, se revocan TODOS los refresh tokens
+      // robo de token. Por seguridad, se borran TODOS los refresh tokens
       // activos del usuario, no solo este.
-      await refreshTokenRepository.revokeAllForUser(stored.userId);
+      await refreshTokenRepository.deleteAllForUser(payload.userId);
       throw new UnauthorizedError("Refresh token inválido");
     }
 
-    if (stored.expiresAt < new Date()) {
-      throw new UnauthorizedError("Refresh token expirado");
-    }
+    // Rotación: el refresh token usado queda marcado como revocado (conserva
+    // su TTL restante, no se borra) y se emite un par nuevo.
+    await refreshTokenRepository.revokeForRotation(payload.userId, payload.tokenId);
 
-    // Rotación: el refresh token usado queda inválido, se emite un par nuevo.
-    await refreshTokenRepository.revoke(stored.id);
-
-    const user = await authRepository.findById(stored.userId);
+    const user = await authRepository.findById(payload.userId);
     if (!user) {
       throw new UnauthorizedError("Usuario no encontrado");
     }
 
     return issueTokenPair(user.id, user.role);
+  },
+
+  async logout(token: string) {
+    let payload;
+    try {
+      payload = verifyRefreshToken(token);
+    } catch {
+      return; // token ya invalido/expirado: nada que hacer, logout "exitoso" igual
+    }
+    await refreshTokenRepository.logoutOne(payload.userId, payload.tokenId);
+  },
+
+  logoutAll(userId: string) {
+    return refreshTokenRepository.deleteAllForUser(userId);
   },
 };
