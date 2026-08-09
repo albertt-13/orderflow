@@ -1,0 +1,22 @@
+meta {
+  name: Login (Admin)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "admin@orderflow.com",
+    "password": "admin12345"
+  }
+}
+
+script:post-response {
+  bru.setEnvVar("adminToken", res.body.accessToken);
+}

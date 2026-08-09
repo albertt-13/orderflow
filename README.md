@@ -10,11 +10,23 @@ Fase 1 — Monolito sólido (en progreso). Ver el roadmap completo en el vault d
 
 ## Endpoints
 
-| Método | Ruta            | Auth | Descripción                                   |
-|--------|-----------------|------|------------------------------------------------|
-| POST   | `/auth/register`| —    | Crea un usuario (rol `CLIENTE` por defecto)    |
-| POST   | `/auth/login`   | —    | Devuelve `accessToken` (15m) y `refreshToken` (7d) |
-| GET    | `/health`       | —    | Health check                                   |
+| Método | Ruta                     | Auth        | Descripción                                                    |
+|--------|--------------------------|-------------|-----------------------------------------------------------------|
+| GET    | `/health`                | —           | Health check                                                    |
+| POST   | `/auth/register`         | —           | Crea un usuario (rol `CLIENTE` por defecto)                     |
+| POST   | `/auth/login`            | —           | Devuelve `accessToken` (15m) y `refreshToken` (7d)               |
+| POST   | `/auth/refresh`          | —           | Rota el refresh token; el usado queda inválido                  |
+| GET    | `/products`              | —           | Lista pública, paginada (`?page=&limit=`), filtro por `name`    |
+| POST   | `/products`              | ADMIN       | Crea un producto                                                 |
+| PATCH  | `/products/:id`          | ADMIN       | Actualiza campos parciales de un producto                       |
+| DELETE | `/products/:id`          | ADMIN       | Borra un producto                                                |
+| POST   | `/orders`                | autenticado | Crea una orden y descuenta stock en una transacción             |
+| GET    | `/orders/me`             | autenticado | Órdenes del usuario autenticado, con sus items                  |
+| PATCH  | `/orders/:id/status`     | ADMIN       | Avanza el estado de una orden (`PENDING→PAID→SHIPPED`/`CANCELLED`) |
+
+Colección de [Bruno](https://www.usebruno.com/) con todos los endpoints en `bruno/` — abrí esa
+carpeta como colección, elegí el environment `Local`, y corré `Login`/`Login (Admin)` primero
+(guardan el token solos).
 
 ## Cómo levantarlo
 

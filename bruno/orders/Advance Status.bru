@@ -1,0 +1,25 @@
+meta {
+  name: Advance Status
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/orders/:id/status
+  body: json
+  auth: none
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Authorization: Bearer {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "PAID"
+  }
+}
