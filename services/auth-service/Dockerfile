@@ -4,6 +4,7 @@
 # no arrastra el código fuente de los otros servicios a esta imagen.
 FROM node:24-alpine AS base
 WORKDIR /app
+COPY tsconfig.base.json ./tsconfig.base.json
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY services/api-gateway/package.json ./services/api-gateway/package.json
