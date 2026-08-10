@@ -4,11 +4,15 @@
   "private": true,
   "description": "Sistema de gestión de pedidos con arquitectura de microservicios orientada a eventos — proyecto de aprendizaje Sr Backend (Node, TypeScript, Express, PostgreSQL, Redis, RabbitMQ, MongoDB)",
   "type": "module",
-  "workspaces": ["packages/*", "services/*"],
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "license": "ISC",
   "devDependencies": {
@@ -19,6 +23,7 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.8",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.66.0"
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^4.1.10"
   }
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@orderflow/shared": "*",
@@ -24,6 +25,7 @@
     "@types/amqplib": "^0.10.8",
     "@types/express": "^5.0.6",
     "@types/pg": "^8.20.4",
-    "prisma": "^7.9.1"
+    "prisma": "^7.9.1",
+    "vitest": "^4.1.10"
   }
 }
