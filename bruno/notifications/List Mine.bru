@@ -1,0 +1,15 @@
+meta {
+  name: List Mine
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/notifications/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
