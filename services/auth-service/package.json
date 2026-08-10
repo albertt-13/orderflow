@@ -7,7 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "seed": "tsx prisma/seed.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@orderflow/shared": "*",
@@ -23,10 +24,16 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^12.1.0",
+    "@testcontainers/redis": "^12.1.0",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.20.4",
-    "prisma": "^7.9.1"
+    "@types/supertest": "^7.2.1",
+    "prisma": "^7.9.1",
+    "supertest": "^7.2.2",
+    "testcontainers": "^12.1.0",
+    "vitest": "^4.1.10"
   }
 }
