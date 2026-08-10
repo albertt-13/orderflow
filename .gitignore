@@ -4,7 +4,7 @@ dist/
 *.log
 .DS_Store
 
-/src/generated/prisma
+**/generated/prisma
 
 # skills de referencia de Prisma para agentes IA (regenerables, no aportan al repo)
 .agents/
