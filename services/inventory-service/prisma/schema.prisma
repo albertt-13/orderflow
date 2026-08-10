@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
+
+/// Reserva de stock por orden. inventory-service es dueño de este registro:
+/// cuando llega "order.cancelled", consulta ACA que reservo para esa orden
+/// en vez de confiar en que el evento le repita los items - evita depender
+/// de datos que le pertenecen a otro bounded context.
+model StockReservation {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  productId String   @db.Uuid
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
