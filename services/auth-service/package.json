@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "seed": "tsx prisma/seed.ts",
+    "generate": "prisma generate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts"
   },

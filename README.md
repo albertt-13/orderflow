@@ -1,5 +1,7 @@
 # OrderFlow
 
+[![CI](https://github.com/albertt-13/orderflow/actions/workflows/ci.yml/badge.svg)](https://github.com/albertt-13/orderflow/actions/workflows/ci.yml)
+
 Sistema de gestión de pedidos estilo e-commerce, construido como proyecto de aprendizaje para
 un rol Sr Backend. Arrancó como monolito por capas (Fases 1-3) y se partió en microservicios
 orientados a eventos (Fase 4) — el historial de commits muestra la evolución completa.
@@ -164,6 +166,9 @@ Panel de administración: http://localhost:15672 (guest/guest). Exchange topic
 - Kubernetes (mencionado, no implementado — Docker Compose alcanza para este nivel).
 - Tracing distribuido real (hoy es `x-request-id` + grep manual entre logs, no un
   Jaeger/Zipkin).
+- El test de integración con Testcontainers cubre solo `auth-service` — extenderlo a
+  `inventory-service`/`orders-service` (con RabbitMQ real, no mockeado) es el siguiente paso lógico.
+- CI no construye las imágenes Docker todavía (lint + typecheck + test sí, build de imágenes no).
 
 ## Flujo de ramas
 
@@ -185,6 +190,9 @@ Panel de administración: http://localhost:15672 (guest/guest). Exchange topic
 - Docker + Docker Compose
 - Pino para logging (con `x-request-id` correlacionado entre servicios)
 - Zod para validación
+- Prometheus + Grafana para métricas
+- Vitest (unitarios) + Testcontainers/Supertest (integración) + GitHub Actions (CI)
+- helmet + CORS con whitelist explícita en el gateway
 
 ## Scripts (por servicio)
 

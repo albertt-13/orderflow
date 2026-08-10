@@ -9,6 +9,7 @@
     "services/*"
   ],
   "scripts": {
+    "generate": "npm run generate --workspaces --if-present",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "npm run typecheck --workspaces --if-present",

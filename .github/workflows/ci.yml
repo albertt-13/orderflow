@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Los clientes de Prisma no se commitean (estan en .gitignore) - hay
+      # que generarlos en cada corrida, igual que en el Dockerfile de cada
+      # servicio.
+      - name: Generate Prisma clients
+        run: npm run generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # El test de integracion de auth-service levanta Postgres y Redis
+      # propios con Testcontainers - no hace falta declarar "services:" acá,
+      # los runners de GitHub ya tienen Docker disponible.
+      - name: Test
+        run: npm run test
