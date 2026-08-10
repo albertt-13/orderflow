@@ -10,6 +10,13 @@ const envSchema = z.object({
   INVENTORY_SERVICE_URL: z.string().url(),
   ORDERS_SERVICE_URL: z.string().url(),
   NOTIFICATIONS_SERVICE_URL: z.string().url(),
+  // Whitelist explicita, separada por comas. Vacio por defecto = ningun
+  // origen de browser puede llamar (todavia no hay frontend). Cuando exista
+  // uno (ej. el dashboard de la mutacion Data4Sales), se agrega su origen.
+  CORS_ORIGINS: z
+    .string()
+    .default("")
+    .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
 });
 
 const parsed = envSchema.safeParse(process.env);

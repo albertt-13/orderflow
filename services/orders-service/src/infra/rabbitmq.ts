@@ -8,16 +8,18 @@ export { EXCHANGE };
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
 let connecting: Promise<Channel> | null = null;
+let shuttingDown = false;
 
 async function connect(): Promise<Channel> {
   connection = await amqp.connect(env.RABBITMQ_URL);
 
   connection.on("error", (err) => logger.warn({ err }, "rabbitmq: error de conexión"));
   connection.on("close", () => {
-    logger.warn("rabbitmq: conexión cerrada, reintentando en 2s");
     channel = null;
     connection = null;
     connecting = null;
+    if (shuttingDown) return;
+    logger.warn("rabbitmq: conexión cerrada, reintentando en 2s");
     setTimeout(() => {
       getChannel().catch((err) => logger.warn({ err }, "rabbitmq: falló el reintento de conexión"));
     }, 2000);
@@ -39,6 +41,13 @@ export function getChannel(): Promise<Channel> {
     });
   }
   return connecting;
+}
+
+export async function closePublisherConnection(): Promise<void> {
+  shuttingDown = true;
+  if (connection) {
+    await connection.close();
+  }
 }
 
 export async function publishEvent(routingKey: string, payload: unknown): Promise<void> {

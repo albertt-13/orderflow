@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { logger } from "./infra/logger.js";
 import { env } from "./shared/config/env.js";
@@ -12,6 +14,11 @@ export const app = express();
 
 app.use(requestId);
 app.use(pinoHttp({ logger, genReqId: (req) => (req.headers["x-request-id"] as string) || randomUUID() }));
+app.use(helmet());
+// Whitelist explicita (CORS_ORIGINS): sin origenes configurados, ningun
+// browser puede llamar cross-origin — curl/Bruno/servidor-a-servidor no
+// pasan por CORS, así que esto no afecta esos casos.
+app.use(cors({ origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false }));
 app.use(forwardAuthHeaders);
 
 app.get("/health", async (_req, res) => {

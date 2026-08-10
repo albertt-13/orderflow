@@ -16,3 +16,7 @@ export async function connectMongo() {
 export function getNotificationsCollection() {
   return mongoClient.db().collection("notifications");
 }
+
+export function pingMongo() {
+  return mongoClient.db().command({ ping: 1 });
+}

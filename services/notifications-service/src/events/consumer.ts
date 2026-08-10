@@ -1,15 +1,22 @@
 import amqp from "amqplib";
-import { ROUTING_KEYS, type OrderCancelledEvent, type OrderConfirmedEvent } from "@orderflow/shared";
+import { EXCHANGE, ROUTING_KEYS, type OrderCancelledEvent, type OrderConfirmedEvent } from "@orderflow/shared";
 import { env } from "../shared/config/env.js";
 import { logger } from "../infra/logger.js";
 import { redis } from "../infra/redis.js";
-import { EXCHANGE } from "../infra/rabbitmq.js";
 import { notificationsService } from "../modules/notifications/notifications.service.js";
 
 const QUEUE = "notifications.saga-events";
 const DLQ = "notifications.saga-events.dlq";
 const MAX_RETRIES = 3;
 const PROCESSED_EVENT_TTL_SECONDS = 24 * 60 * 60;
+
+let connected = false;
+
+/** Único chequeo de RabbitMQ que tiene sentido acá: este servicio no
+ * publica nada, así que "estar sano" es que el consumer esté conectado. */
+export function isConsumerConnected(): boolean {
+  return connected;
+}
 
 export async function startConsumer(): Promise<void> {
   const connection = await amqp.connect(env.RABBITMQ_URL);
@@ -18,6 +25,7 @@ export async function startConsumer(): Promise<void> {
     logger.error({ err }, "rabbitmq: error en la conexión del consumer");
   });
   connection.on("close", () => {
+    connected = false;
     logger.error("rabbitmq: conexión del consumer cerrada, terminando el proceso");
     process.exit(1);
   });
@@ -32,6 +40,7 @@ export async function startConsumer(): Promise<void> {
 
   await channel.prefetch(1);
 
+  connected = true;
   logger.info(`consumer escuchando "${QUEUE}" (order.confirmed, order.cancelled)`);
 
   await channel.consume(QUEUE, (msg) => {
