@@ -1,0 +1,24 @@
+# Para scrapear los servicios corriendo con "npm run dev" (tsx en el host)
+# en vez de los containers de docker-compose. Uso:
+#   docker run -d --name prometheus-local -p 9090:9090 \
+#     -v ./docker/prometheus.local-test.yml:/etc/prometheus/prometheus.yml:ro \
+#     --add-host=host.docker.internal:host-gateway prom/prometheus:latest
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: api-gateway
+    static_configs:
+      - targets: ["host.docker.internal:3000"]
+  - job_name: auth-service
+    static_configs:
+      - targets: ["host.docker.internal:4001"]
+  - job_name: inventory-service
+    static_configs:
+      - targets: ["host.docker.internal:4002"]
+  - job_name: orders-service
+    static_configs:
+      - targets: ["host.docker.internal:4003"]
+  - job_name: notifications-service
+    static_configs:
+      - targets: ["host.docker.internal:4004"]

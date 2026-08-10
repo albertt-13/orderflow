@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { pinoHttp } from "pino-http";
-import { runHealthChecks } from "@orderflow/shared";
+import { createMetrics, runHealthChecks } from "@orderflow/shared";
 import { logger } from "./infra/logger.js";
 import { prisma } from "./infra/prisma.js";
 import { redis } from "./infra/redis.js";
@@ -10,8 +10,13 @@ import { authRouter } from "./modules/auth/auth.routes.js";
 
 export const app = express();
 
+const { metricsMiddleware, metricsHandler } = createMetrics("auth-service");
+
 app.use(pinoHttp({ logger, genReqId: (req) => (req.headers["x-request-id"] as string) || randomUUID() }));
+app.use(metricsMiddleware);
 app.use(express.json());
+
+app.get("/metrics", metricsHandler);
 
 app.get("/health", async (_req, res) => {
   const { status, dependencies } = await runHealthChecks({

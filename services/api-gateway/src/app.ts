@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
+import { createMetrics, runHealthChecks } from "@orderflow/shared";
 import { logger } from "./infra/logger.js";
 import { env } from "./shared/config/env.js";
 import { requestId } from "./middleware/requestId.js";
@@ -12,14 +13,19 @@ import { authProxy, inventoryProxy, notificationsProxy, ordersProxy } from "./pr
 
 export const app = express();
 
+const { metricsMiddleware, metricsHandler } = createMetrics("api-gateway");
+
 app.use(requestId);
 app.use(pinoHttp({ logger, genReqId: (req) => (req.headers["x-request-id"] as string) || randomUUID() }));
+app.use(metricsMiddleware);
 app.use(helmet());
 // Whitelist explicita (CORS_ORIGINS): sin origenes configurados, ningun
 // browser puede llamar cross-origin — curl/Bruno/servidor-a-servidor no
 // pasan por CORS, así que esto no afecta esos casos.
 app.use(cors({ origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false }));
 app.use(forwardAuthHeaders);
+
+app.get("/metrics", metricsHandler);
 
 app.get("/health", async (_req, res) => {
   const services = {
@@ -29,23 +35,19 @@ app.get("/health", async (_req, res) => {
     "notifications-service": env.NOTIFICATIONS_SERVICE_URL,
   };
 
-  const checks = await Promise.all(
-    Object.entries(services).map(async ([name, url]) => {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2000);
-        const response = await fetch(`${url}/health`, { signal: controller.signal });
-        clearTimeout(timeout);
-        return [name, response.ok] as const;
-      } catch {
-        return [name, false] as const;
-      }
-    }),
+  const { status, dependencies } = await runHealthChecks(
+    Object.fromEntries(
+      Object.entries(services).map(([name, url]) => [
+        name,
+        async () => {
+          const response = await fetch(`${url}/health`);
+          if (!response.ok) throw new Error(`${name} respondió ${response.status}`);
+        },
+      ]),
+    ),
   );
 
-  const status = Object.fromEntries(checks);
-  const allOk = checks.every(([, ok]) => ok);
-  res.status(allOk ? 200 : 503).json({ status: allOk ? "ok" : "degraded", services: status });
+  res.status(status === "ok" ? 200 : 503).json({ status, services: dependencies });
 });
 
 // El body NO se parsea acá — http-proxy-middleware necesita el stream de la
