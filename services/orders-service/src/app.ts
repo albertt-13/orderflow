@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { pinoHttp } from "pino-http";
-import { createMetrics, runHealthChecks } from "@orderflow/shared";
+import { createMetrics, requireInternalSecret, runHealthChecks } from "@orderflow/shared";
 import { logger } from "./infra/logger.js";
 import { prisma } from "./infra/prisma.js";
 import { redis } from "./infra/redis.js";
@@ -35,6 +35,8 @@ app.get("/health", async (_req, res) => {
   });
   res.status(status === "ok" ? 200 : 503).json({ status, service: "orders-service", dependencies });
 });
+
+app.use(requireInternalSecret(env.INTERNAL_SERVICE_SECRET));
 
 app.use("/orders", ordersRouter);
 

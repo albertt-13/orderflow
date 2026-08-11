@@ -7,6 +7,7 @@ const envSchema = z.object({
   MONGODB_URL: z.string().min(1),
   RABBITMQ_URL: z.string().url(),
   REDIS_URL: z.string().url(),
+  INTERNAL_SERVICE_SECRET: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

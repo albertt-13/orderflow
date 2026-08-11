@@ -30,6 +30,7 @@ beforeAll(async () => {
   process.env.REDIS_URL = `redis://${redisHost}:${redisContainer.getMappedPort(6379)}`;
   process.env.JWT_ACCESS_SECRET = "test-access-secret";
   process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
+  process.env.INTERNAL_SERVICE_SECRET = "test-internal-secret";
   process.env.NODE_ENV = "test";
 
   execSync("npx prisma migrate deploy", { env: process.env, stdio: "inherit" });
@@ -42,10 +43,15 @@ afterAll(async () => {
   await redisContainer?.stop();
 });
 
+// El gateway es el unico que le pega directo a auth-service en producción -
+// este header simula eso (ver requireInternalSecret en packages/shared).
+const asGateway = () => ({ "x-internal-secret": "test-internal-secret" });
+
 describe("auth-service — flujo completo contra Postgres y Redis reales", () => {
   it("registra un usuario nuevo y devuelve un par de tokens", async () => {
     const response = await request(app)
       .post("/auth/register")
+      .set(asGateway())
       .send({ email: "integration@test.com", password: "password123" });
 
     expect(response.status).toBe(201);
@@ -54,10 +60,11 @@ describe("auth-service — flujo completo contra Postgres y Redis reales", () =>
   });
 
   it("rechaza un registro duplicado con 409", async () => {
-    await request(app).post("/auth/register").send({ email: "dup@test.com", password: "password123" });
+    await request(app).post("/auth/register").set(asGateway()).send({ email: "dup@test.com", password: "password123" });
 
     const response = await request(app)
       .post("/auth/register")
+      .set(asGateway())
       .send({ email: "dup@test.com", password: "password123" });
 
     expect(response.status).toBe(409);
@@ -66,25 +73,32 @@ describe("auth-service — flujo completo contra Postgres y Redis reales", () =>
   it("login con password incorrecta da 401", async () => {
     await request(app)
       .post("/auth/register")
+      .set(asGateway())
       .send({ email: "wrongpass@test.com", password: "password123" });
 
     const response = await request(app)
       .post("/auth/login")
+      .set(asGateway())
       .send({ email: "wrongpass@test.com", password: "otra-cosa" });
 
     expect(response.status).toBe(401);
   });
 
   it("login exitoso, y el refresh rota el token (el viejo deja de servir)", async () => {
-    await request(app).post("/auth/register").send({ email: "refresh@test.com", password: "password123" });
+    await request(app)
+      .post("/auth/register")
+      .set(asGateway())
+      .send({ email: "refresh@test.com", password: "password123" });
     const login = await request(app)
       .post("/auth/login")
+      .set(asGateway())
       .send({ email: "refresh@test.com", password: "password123" });
 
     expect(login.status).toBe(200);
 
     const refreshed = await request(app)
       .post("/auth/refresh")
+      .set(asGateway())
       .send({ refreshToken: login.body.refreshToken });
 
     expect(refreshed.status).toBe(200);
@@ -92,8 +106,17 @@ describe("auth-service — flujo completo contra Postgres y Redis reales", () =>
 
     const reuse = await request(app)
       .post("/auth/refresh")
+      .set(asGateway())
       .send({ refreshToken: login.body.refreshToken });
 
     expect(reuse.status).toBe(401);
+  });
+
+  it("rechaza requests sin el secret interno (bypass del gateway)", async () => {
+    const response = await request(app)
+      .post("/auth/register")
+      .send({ email: "no-secret@test.com", password: "password123" });
+
+    expect(response.status).toBe(403);
   });
 });

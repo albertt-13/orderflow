@@ -15,6 +15,9 @@ function proxyTo(target: string) {
     proxyTimeout: PROXY_TIMEOUT_MS,
     timeout: PROXY_TIMEOUT_MS,
     on: {
+      proxyReq: (proxyReq) => {
+        proxyReq.setHeader("x-internal-secret", env.INTERNAL_SERVICE_SECRET);
+      },
       error: (err, _req, res) => {
         logger.warn({ err, target }, "proxy: el servicio downstream no respondió");
         if ("writeHead" in res) {

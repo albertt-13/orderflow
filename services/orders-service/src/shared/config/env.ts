@@ -8,6 +8,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().url(),
   RABBITMQ_URL: z.string().url(),
   INVENTORY_SERVICE_URL: z.string().url(),
+  INTERNAL_SERVICE_SECRET: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

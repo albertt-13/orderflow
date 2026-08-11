@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { pinoHttp } from "pino-http";
-import { createMetrics, runHealthChecks } from "@orderflow/shared";
+import { createMetrics, requireInternalSecret, runHealthChecks } from "@orderflow/shared";
 import { logger } from "./infra/logger.js";
 import { prisma } from "./infra/prisma.js";
 import { redis } from "./infra/redis.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { env } from "./shared/config/env.js";
 
 export const app = express();
 
@@ -25,6 +26,8 @@ app.get("/health", async (_req, res) => {
   });
   res.status(status === "ok" ? 200 : 503).json({ status, service: "auth-service", dependencies });
 });
+
+app.use(requireInternalSecret(env.INTERNAL_SERVICE_SECRET));
 
 app.use("/auth", authRouter);
 

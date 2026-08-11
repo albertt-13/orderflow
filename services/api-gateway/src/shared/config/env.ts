@@ -10,6 +10,7 @@ const envSchema = z.object({
   INVENTORY_SERVICE_URL: z.string().url(),
   ORDERS_SERVICE_URL: z.string().url(),
   NOTIFICATIONS_SERVICE_URL: z.string().url(),
+  INTERNAL_SERVICE_SECRET: z.string().min(1),
   // Whitelist explicita, separada por comas. Vacio por defecto = ningun
   // origen de browser puede llamar (todavia no hay frontend). Cuando exista
   // uno (ej. el dashboard de la mutacion Data4Sales), se agrega su origen.

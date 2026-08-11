@@ -4,3 +4,4 @@ export * from "./logger/index.js";
 export * from "./domain/money.js";
 export * from "./health/runHealthChecks.js";
 export * from "./metrics/httpMetrics.js";
+export * from "./security/internalAuth.js";

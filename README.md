@@ -70,6 +70,16 @@ puerto al host). Excepción: `auth-service` valida el JWT directamente en su end
 `logout-all`, porque es el dueño de esa lógica — no tiene sentido que dependa del gateway para
 su propia feature de seguridad.
 
+**¿Por qué hay además un `x-internal-secret` entre el gateway y cada servicio?** "Confiar en la
+red interna" asume que esa red es privada — cierto en `docker-compose` (los 4 servicios no
+exponen puerto al host), pero falso en plataformas como Render free tier, donde **todo** Web
+Service queda con URL pública. Sin este secret, cualquiera podría pegarle directo a
+`inventory-service` con un `x-user-id` falsificado y saltarse la validación de JWT del gateway
+por completo. `requireInternalSecret` (en `packages/shared`) rechaza con 403 cualquier request
+sin el header correcto — el gateway lo agrega en cada proxy, nadie más lo conoce. `/health` y
+`/metrics` quedan afuera del chequeo a propósito (los necesitan Render/Prometheus sin pasar por
+el gateway).
+
 **¿Por qué orders-service llama a inventory-service por HTTP en vez de esperar un evento?**
 Necesita el precio actual para calcular el total ANTES de crear la orden — no hay nadie
 esperando una cola para eso. Consecuencia real (encontrada probando, no anticipada): si
