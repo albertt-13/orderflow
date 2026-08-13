@@ -4,6 +4,7 @@ dist/
 *.log
 .render-secrets.txt
 .cloudflared.*
+.admin-token.txt
 .DS_Store
 
 **/generated/prisma
