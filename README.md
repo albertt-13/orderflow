@@ -13,6 +13,10 @@ Sistema de gestión de pedidos estilo e-commerce, construido como proyecto de ap
 un rol Sr Backend. Arrancó como monolito por capas (Fases 1-3) y se partió en microservicios
 orientados a eventos (Fase 4) — el historial de commits muestra la evolución completa.
 
+📐 **[ARCHITECTURE.md](./ARCHITECTURE.md)** — referencia técnica completa: cada endpoint con su
+contrato, el pipeline de middleware de cada servicio, diagrama de clases del dominio, contratos
+de eventos de RabbitMQ, y cómo interactúan Redis/Postgres/Mongo/JWT entre sí.
+
 ## Demo en vivo
 
 Gateway público: **https://orderflow-api-gateway-my23.onrender.com**
