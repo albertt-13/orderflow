@@ -8,9 +8,3 @@ dist/
 .DS_Store
 
 **/generated/prisma
-
-# skills de referencia de Prisma para agentes IA (regenerables, no aportan al repo)
-.agents/
-.claude/skills/
-.windsurf/
-skills-lock.json
