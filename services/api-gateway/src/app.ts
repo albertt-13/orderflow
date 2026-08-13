@@ -27,6 +27,17 @@ app.use(forwardAuthHeaders);
 
 app.get("/metrics", metricsHandler);
 
+// Liveness real: "¿el proceso está vivo?", sin tocar servicios externos.
+// Es a propósito distinto de /health de abajo — Render usa ESTE endpoint
+// para decidir si reinicia el contenedor. Si usara /health (que depende de
+// los otros 4 servicios), un solo servicio dormido tumbaría también al
+// gateway sano: Render vería el 503 agregado y lo mataría igual, aunque el
+// gateway en sí nunca dejó de responder. Bug real encontrado en producción
+// (free tier de Render, cada servicio duerme por separado tras inactividad).
+app.get("/live", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.get("/health", async (_req, res) => {
   const services = {
     "auth-service": env.AUTH_SERVICE_URL,
