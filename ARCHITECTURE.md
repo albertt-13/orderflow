@@ -268,8 +268,19 @@ confirmación) es asíncrono vía eventos — el cliente hace polling a `GET /or
 
 | Método | Ruta | Qué hace |
 |--------|------|----------|
-| GET | `/health` | Pega `GET /health` a los 4 servicios en paralelo, agrega el resultado. `200` si todos ok, `503` si alguno falla. |
+| GET | `/live` | Liveness real: siempre `200` si el proceso está vivo, no toca nada externo. Es lo que Render usa para decidir si reinicia el contenedor — a propósito distinto de `/health` (ver mini-ADR abajo). |
+| GET | `/health` | Pega `GET /health` a los 4 servicios en paralelo, agrega el resultado. `200` si todos ok, `503` si alguno falla. Para monitoreo humano, no para que la plataforma decida vida o muerte del proceso. |
 | GET | `/metrics` | Métricas Prometheus del propio gateway (no agrega las de los demás — cada servicio expone las suyas). |
+
+**`/live` vs `/health` — liveness vs readiness (bug real encontrado en producción).** Al
+desplegar en Render se configuró inicialmente `/health` como el health check de la plataforma
+para el gateway. Como `/health` depende de los 4 servicios internos, y cada uno se duerme por
+separado tras inactividad en el free tier, bastaba con que UNO estuviera dormido para que
+`/health` diera 503 — y Render, al ver eso, mataba y reiniciaba el gateway en loop, **aunque el
+gateway en sí nunca hubiera dejado de responder**. Es la distinción clásica de Kubernetes entre
+liveness probe ("¿está vivo? reinicialo si no") y readiness/dependency check ("¿están sanas mis
+dependencias?", útil para monitoreo, no para decidir si matar el proceso). `/live` no depende de
+nada externo — separa correctamente ambos conceptos.
 
 ### Formato de error uniforme
 

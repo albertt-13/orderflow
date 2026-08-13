@@ -27,8 +27,8 @@ curl https://orderflow-api-gateway-my23.onrender.com/health
 
 Deployado en Render (5 Web Services, uno por Dockerfile) + Postgres en Neon + Redis en Upstash +
 MongoDB en Atlas + RabbitMQ en CloudAMQP — combinación elegida específicamente por no requerir
-tarjeta internacional. Free tier: el primer request tras un rato de inactividad puede tardar
-~30s en despertar (cold start).
+tarjeta internacional. Un keep-alive externo (cron-job.org, cada 10 min contra `/health`)
+mantiene los 5 servicios despiertos, así que no debería haber cold starts en horario normal.
 
 ## Estado actual
 
