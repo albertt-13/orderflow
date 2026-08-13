@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 *.log
+.render-secrets.txt
+.cloudflared.*
 .DS_Store
 
 **/generated/prisma

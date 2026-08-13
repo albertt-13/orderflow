@@ -6,11 +6,24 @@ Sistema de gestión de pedidos estilo e-commerce, construido como proyecto de ap
 un rol Sr Backend. Arrancó como monolito por capas (Fases 1-3) y se partió en microservicios
 orientados a eventos (Fase 4) — el historial de commits muestra la evolución completa.
 
+## Demo en vivo
+
+Gateway público: **https://orderflow-api-gateway-my23.onrender.com**
+
+```bash
+curl https://orderflow-api-gateway-my23.onrender.com/health
+```
+
+Deployado en Render (5 Web Services, uno por Dockerfile) + Postgres en Neon + Redis en Upstash +
+MongoDB en Atlas + RabbitMQ en CloudAMQP — combinación elegida específicamente por no requerir
+tarjeta internacional. Free tier: el primer request tras un rato de inactividad puede tardar
+~30s en despertar (cold start).
+
 ## Estado actual
 
-Fase 4 — Microservicios completa: 5 servicios independientes, saga por coreografía de punta a
-punta, cada uno con su propia base de datos. Ver el roadmap completo en el vault de Obsidian
-del proyecto.
+Fase 6 — Deploy completo: 5 servicios independientes, saga por coreografía de punta a punta,
+cada uno con su propia base de datos, deployados en producción real. Ver el roadmap completo en
+el vault de Obsidian del proyecto.
 
 ## Arquitectura
 
