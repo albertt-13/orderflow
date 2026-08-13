@@ -24,7 +24,10 @@ export async function getProductsByIds(ids: string[]): Promise<InventoryProduct[
 
   try {
     const url = `${env.INVENTORY_SERVICE_URL}/products/by-ids?ids=${ids.join(",")}`;
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { "x-internal-secret": env.INTERNAL_SERVICE_SECRET },
+    });
 
     if (!response.ok) {
       throw new Error(`inventory-service respondió ${response.status}`);
