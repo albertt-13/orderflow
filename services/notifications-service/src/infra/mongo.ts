@@ -8,7 +8,10 @@ import { logger } from "./logger.js";
 // SSL genérica, no un simple connection refused) - forzar IPv4 lo evita.
 dns.setDefaultResultOrder("ipv4first");
 
-export const mongoClient = new MongoClient(env.MONGODB_URL);
+// family: 4 fuerza IPv4 a nivel de socket, ademas del dns.setDefaultResultOrder
+// de arriba - el driver de Mongo no siempre respeta la preferencia global de
+// Node para las conexiones que abre internamente.
+export const mongoClient = new MongoClient(env.MONGODB_URL, { family: 4 });
 
 let connected = false;
 
