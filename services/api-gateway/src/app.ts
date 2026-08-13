@@ -13,6 +13,14 @@ import { authProxy, inventoryProxy, notificationsProxy, ordersProxy } from "./pr
 
 export const app = express();
 
+// Sin esto, req.ip detrás del proxy de Render (y Cloudflare delante de esa)
+// es siempre la IP interna del load balancer, la misma para TODO el mundo -
+// el rate limiter de login (ratelimit:login:${req.ip}) terminaría
+// compartiendo el límite de 5 intentos entre TODOS los clientes en vez de
+// contar por IP real. Bug real encontrado en producción: cualquiera
+// probando el login agotaba el límite para cualquier otra persona.
+app.set("trust proxy", true);
+
 const { metricsMiddleware, metricsHandler } = createMetrics("api-gateway");
 
 app.use(requestId);
