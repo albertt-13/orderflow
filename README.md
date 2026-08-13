@@ -1,6 +1,13 @@
 # OrderFlow
 
 [![CI](https://github.com/albertt-13/orderflow/actions/workflows/ci.yml/badge.svg)](https://github.com/albertt-13/orderflow/actions/workflows/ci.yml)
+![Node](https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Upstash-DC382D?logo=redis&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-CloudAMQP-FF6600?logo=rabbitmq&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?logo=docker&logoColor=white)
 
 Sistema de gestión de pedidos estilo e-commerce, construido como proyecto de aprendizaje para
 un rol Sr Backend. Arrancó como monolito por capas (Fases 1-3) y se partió en microservicios
@@ -37,6 +44,42 @@ el vault de Obsidian del proyecto.
 
 Ningún servicio lee la base de datos de otro. Si necesita datos de otro dominio, o llama por
 HTTP (síncrono) o escucha eventos (asíncrono) — nunca un JOIN cruzando bases.
+
+### Diagrama de arquitectura
+
+```mermaid
+graph TB
+    Client[Cliente] -->|HTTPS| GW[api-gateway<br/>JWT + rate limit]
+
+    GW -->|HTTP + x-internal-secret| Auth[auth-service]
+    GW -->|HTTP + x-internal-secret| Inv[inventory-service]
+    GW -->|HTTP + x-internal-secret| Ord[orders-service]
+    GW -->|HTTP + x-internal-secret| Notif[notifications-service]
+
+    Ord -->|HTTP: precio actual| Inv
+
+    Auth --> AuthDB[(Postgres<br/>auth_db)]
+    Inv --> InvDB[(Postgres<br/>inventory_db)]
+    Ord --> OrdDB[(Postgres<br/>orders_db)]
+    Notif --> Mongo[(MongoDB<br/>notifications)]
+
+    Auth -.-> Redis[(Redis<br/>cache/sesiones/rate limit)]
+    Inv -.-> Redis
+    Ord -.-> Redis
+    Notif -.-> Redis
+    GW -.-> Redis
+
+    Inv ===|eventos| MQ{{RabbitMQ<br/>orderflow.events}}
+    Ord ===|eventos| MQ
+    Notif ===|eventos| MQ
+
+    style GW fill:#4a90d9
+    style MQ fill:#ff6600
+```
+
+Solo `api-gateway` tiene URL pública. Los otros 4 no deberían ser alcanzables desde afuera — en
+`docker-compose` eso lo garantiza la red de Docker; en un free tier como Render, donde todo Web
+Service queda público sí o sí, lo garantiza el `x-internal-secret` (ver mini-ADR más abajo).
 
 ### Saga por coreografía
 
@@ -216,6 +259,9 @@ Panel de administración: http://localhost:15672 (guest/guest). Exchange topic
 - Prometheus + Grafana para métricas
 - Vitest (unitarios) + Testcontainers/Supertest (integración) + GitHub Actions (CI)
 - helmet + CORS con whitelist explícita en el gateway
+
+**Deploy:** Render (5 Web Services) + Neon (Postgres) + Upstash (Redis) + MongoDB Atlas +
+CloudAMQP (RabbitMQ) — elegido por no requerir tarjeta internacional en ningún paso.
 
 ## Scripts (por servicio)
 
